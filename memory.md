@@ -9,7 +9,8 @@
 
 - **Fase:** scaffolding + **Fase 0** (bootstrap, 8/8) + **Fase 1** (contrato de escena) + **Fase 2 al 12/13** (núcleo geométrico completo en Rust y en `py_bridge`; T28 abierta solo por CA-19, aceptado como desviación por hardware). SDD Fases 0–2 especificadas, diseñadas y desglosadas (`proposal.md`, `spec.md`, `design.md`, `tasks.md` con 46 tareas).
 - **Estructura creada:** `core_rust/`, `py_bridge/`, `app/`, `viewer/`, `specs/`, `tests/`, `assets/meshes/`, `scripts/`, `.github/workflows/`.
-- **Entorno:** `.\scripts\bootstrap.ps1` / `./scripts/bootstrap.sh` idempotentes (validan versiones, instalan dependencias y compilan el núcleo solo si las fuentes son más nuevas que el artefacto). `requirements.txt` (runtime), `requirements-dev.txt` (pruebas, lint, maturin) y `requirements-ml.txt` (torch opcional). CI en `.github/workflows/ci.yml` (Windows + Linux), **aún no ejecutado en GitHub**.
+- **Repositorio:** `https://github.com/osravaco-hub/Simulations` (privado; la cuenta de GitHub es `osravaco-hub`, distinta del `user.name` local `Osravaco`). Rama `main`, commit inicial `f347a13`, 70 archivos y 1,14 MB: sin `.venv`, `core_rust/target`, cachés ni binarios.
+- **Entorno:** `.\scripts\bootstrap.ps1` / `./scripts/bootstrap.sh` idempotentes (validan versiones, instalan dependencias y compilan el núcleo solo si las fuentes son más nuevas que el artefacto). `requirements.txt` (runtime), `requirements-dev.txt` (pruebas, lint, maturin) y `requirements-ml.txt` (torch opcional). CI en `.github/workflows/ci.yml` (Windows + Linux): el primer `push` lo dispara, **resultado aún no comprobado** (no hay `gh` ni API con permisos).
 - **Contrato de escena:** `py_bridge/scene.py` (`Mesh`, `Skeleton`, `Scene`, `SceneError`, JSON v1 determinista), `specs/rig-studio-foundation/scene.schema.json`, 5 fixtures, 2 activos de ejemplo y **164 pruebas pytest** en verde (`.\.venv\Scripts\python.exe -m pytest -q`). Defectos **D-1** y **D-2** de la verificación de la Fase 1 ya corregidos.
 - **Núcleo nativo:** compila como `cdylib` con PyO3 (`rustc 1.100.0`, host `x86_64-pc-windows-msvc`, `rust-version = "1.88"`, wheel `cp311-abi3-win_amd64`). Expone `version()`, `add()`, `bounds()`, `normals()`, `normalize_unit_aabb()` y `mesh_stats()`; `_spike_len` **ya no existe**. `error.rs` centraliza los mensajes de design §4.7.1 y `geometry.rs` las cuatro operaciones puras (21 pruebas `cargo test --no-default-features`). `bounds` **solo acepta búfer** (cambio incompatible de RF-20). Línea base en `core_rust/benches/baseline.md`: `bounds` 4,04 ms ✅, `normals` 47,71 ms ❌ frente a los 30 ms de CA-19.
 - **MagicArticulate:** adaptador con import perezoso de torch; `load()`/`articulate()` lanzan `PendingFeatureError` (feature `magicarticulate-backend`).
@@ -43,11 +44,12 @@
 | 2026-11-24 | `py_bridge.geometry` **normaliza** antes del FFI; los tests de error del núcleo llaman a `core_rust` directamente | Coherente con RF-09/RF-21: `float64` o no contiguo es error para el FFI pero uso normal para el usuario, así que cada capa se prueba con su propio contrato (T31) |
 | 2026-11-24 | La prueba de GIL compara **tasa de ticks** (ratio > 5), no el 1000× de design §6.4 | En CPython 3.15 la llamada de control `sum(range(N))` también cede el GIL (`ticks_control ≈ 307 000`), así que el factor 1000 es inalcanzable por construcción; la tasa sí distingue retener de liberar (4,5 M ticks nativo vs 307 k) |
 | 2026-11-24 | `scripts/bootstrap.ps1` se guarda en **UTF-8 con BOM** y compone la ruta de `site-packages` con `Join-Path` | Windows PowerShell 5.1 lee los `.ps1` sin BOM como ANSI (rompe los acentos) y decodifica mal la salida de Python cuando la ruta tiene acentos (fallo real en la primera ejecución: `Test-Path` daba `False` sobre una ruta existente) |
+| 2026-11-24 | `.gitattributes` con `* text=auto` y `*.sh text eol=lf`, `*.ps1 text eol=crlf` | `core.autocrlf=true` de Windows escribiría `bootstrap.sh` con CRLF en cada clon y bash lo rechazaría en Linux/CI; el índice guarda LF en todos los archivos |
 
 ## Deuda técnica conocida
 
 - [x] El crate Rust **ya se compila en esta máquina** (`rustc 1.100.0` + host MSVC + `maturin 1.16.0`); T01 y T02 cerradas y `PyBuffer` sin copia verificado bajo `abi3-py311`.
-- [x] Pruebas Python: arnés `pytest` (`pyproject.toml` + `tests/conftest.py`), **164 pruebas en verde** (escena, geometría, GIL, capas, bootstrap y arnés Qt). El workflow de CI existe (T06) pero **no se ha ejecutado en GitHub**.
+- [x] Pruebas Python: arnés `pytest` (`pyproject.toml` + `tests/conftest.py`), **164 pruebas en verde** (escena, geometría, GIL, capas, bootstrap y arnés Qt). El workflow de CI existe (T06) y ya está publicado en el remoto; falta leer el resultado de la primera ejecución.
 - [ ] **CA-19: desviación aceptada por hardware.** `normals` tarda 47,71 ms frente a 30 ms en este equipo (Ryzen 3 2200U, ~8 GB/s de memoria); el 80 % es la acumulación en `f64` (24 MB, escritura dispersa) que exige design §4.8. **Decisión (2026-11-24): mantener `f64` y re-basar el umbral en el equipo objetivo antes de cerrar T44/T46.** Detalle, desglose y medición de la alternativa `f32` (27,59 ms, 1 *ulp*) en `core_rust/benches/baseline.md`.
 - [ ] `mesh_stats` cuesta 449 ms con 2 M de caras (`HashSet` de aristas, riesgo T14): sin umbral, pero **no puede llamarse desde el hilo de UI**.
 - [ ] `cargo bench` no está en CI: el banco es manual (T28) y `bounds` (4 ms) es el único umbral estable para vigilar.
@@ -61,6 +63,17 @@
 ---
 
 ## Historial de cambios
+
+### [2026-11-24 23:50] — Repositorio git inicializado y publicado en GitHub
+- **Agente:** `sdd-orchestrator` (a petición expresa del usuario: «sube el proyecto a mi repositorio Simulations»)
+- **Feature / módulo:** infraestructura del proyecto (no toca código)
+- **Archivos tocados:**
+  - `.gitattributes` (nuevo)
+  - `memory.md` (estado, decisión de `.gitattributes`, esta entrada)
+  - `.git/` (repositorio nuevo, sin cambios en el código)
+- **Qué se hizo:** `git init -b main`; commit inicial `f347a13` con **70 archivos / 12 033 líneas / 1,14 MB**; remoto `origin = https://github.com/osravaco-hub/Simulations.git`; `git push -u origin main` aceptado («new branch»), `refs/heads/main` remoto = `f347a135…` = local.
+- **Motivo:** el usuario tiene un repositorio nuevo y vacío llamado *Simulations* y pidió publicar el proyecto allí.
+- **Efectos colaterales / pendientes:** el repositorio es **privado** y la cuenta de GitHub es `osravaco-hub` (el `user.name` local, `Osravaco`, es solo el nombre para los commits). Las credenciales salen del helper `store` de Windows; no se ha creado ningún token nuevo ni se ha impreso. El `push` a `main` **dispara el workflow de CI por primera vez**; su resultado hay que revisarlo en la pestaña Actions (el token guardado no tiene permisos de API: `repos/...` devuelve 401, así que no se puede consultar desde aquí). No se ha creado PR, issue, tag ni release. `.gitignore` impide que entren `.venv`, `core_rust/target`, cachés y binarios.
 
 ### [2026-11-24 21:10] — Fase 0 cerrada: bootstrap, CI, arnés de pruebas y diagnóstico del núcleo
 - **Agente:** `sdd-orchestrator` (implementación directa; los subagentes siguen sin cuota)
