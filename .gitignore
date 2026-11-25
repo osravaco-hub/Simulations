@@ -1,0 +1,35 @@
+# Rust
+core_rust/target/
+*.pyd
+*.so
+*.dylib
+*.dll
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.ipynb_checkpoints/
+*.egg-info/
+build/
+dist/
+htmlcov/
+.coverage
+.coverage.*
+coverage.xml
+junit.xml
+
+# Artefactos copiados por py_bridge/native.py desde core_rust/target/
+py_bridge/_native/
+
+# Entorno
+.env
+.DS_Store
+Thumbs.db
+
+# Registros locales (bench, compilación, depuración)
+*.log

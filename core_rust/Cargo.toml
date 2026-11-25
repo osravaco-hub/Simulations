@@ -1,0 +1,44 @@
+[package]
+name = "core_rust"
+version = "0.1.0"
+edition = "2024"
+rust-version = "1.88"
+description = "Núcleo nativo del estudio de rigging y simulación, expuesto a Python vía PyO3"
+license = "MIT OR Apache-2.0"
+publish = false
+
+[lib]
+name = "core_rust"
+# cdylib = biblioteca dinámica cargable desde Python (.pyd / .so / .dylib)
+# rlib  = permite testear y reutilizar el crate desde otros crates Rust
+crate-type = ["cdylib", "rlib"]
+
+[features]
+# `extension-module` evita enlazar contra libpython: el intérprete ya está en memoria.
+# Para correr `cargo test` en Linux/macOS:  cargo test --no-default-features
+default = ["extension-module"]
+extension-module = ["pyo3/extension-module"]
+
+[dependencies]
+pyo3 = { version = "0.30.1", features = ["abi3-py311"] }
+
+[dev-dependencies]
+# Solo para el banco de `benches/geometry.rs` (T28). Sin `default-features`
+# (ni plotters ni rayon): el banco mide funciones puras con
+# `cargo bench --no-default-features`, así que no necesita informes gráficos y
+# evita que `criterion` enlace con `extension-module` (riesgo T9).
+criterion = { version = "0.5", default-features = false, features = [
+    "cargo_bench_support",
+] }
+
+# Banco de rendimiento (CA-19 / RF-23). `harness = false` porque lo dirige
+# `criterion`, no el arnés de libtest.
+[[bench]]
+name = "geometry"
+harness = false
+
+[profile.release]
+lto = "thin"
+codegen-units = 1
+opt-level = 3
+strip = "symbols"

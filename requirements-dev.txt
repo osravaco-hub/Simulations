@@ -1,0 +1,19 @@
+# Rig Studio — herramientas de desarrollo y pruebas
+#
+# Instalación:  pip install -r requirements.txt -r requirements-dev.txt
+#               pip install -e .
+#
+# Incluye el compilador de la extensión nativa (`maturin`) y el arnés de
+# pruebas. Ninguna de estas dependencias se necesita para ejecutar la app.
+
+# --- Pruebas --------------------------------------------------------------
+pytest>=8.0
+pytest-qt>=4.4
+jsonschema>=4.21
+
+# --- Calidad --------------------------------------------------------------
+ruff>=0.6
+
+# --- Puente Rust/Python ---------------------------------------------------
+# maturin compila `core_rust` como extensión nativa (T01/T05).
+maturin>=1.7,<2.0

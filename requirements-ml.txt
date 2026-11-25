@@ -1,0 +1,13 @@
+# Rig Studio — backend de auto-rigging (OPCIONAL)
+#
+# NO se instala por defecto: la app debe arrancar sin torch (RF-29 / CA-31).
+# Sin estas dependencias, `MagicArticulateBackend` lanza un `RuntimeError`
+# accionable y el resto de la aplicación funciona con normalidad.
+#
+# Instalación:  pip install -r requirements-ml.txt
+
+torch>=2.4,<3.0
+
+# En GPU NVIDIA usa el índice CUDA correspondiente a tu driver, p. ej.:
+#   pip install torch --index-url https://download.pytorch.org/whl/cu124
+# En Apple Silicon (MPS) el wheel estándar ya lo soporta.

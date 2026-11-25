@@ -1,0 +1,81 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://rig-studio.local/schemas/scene-1.json",
+  "title": "Rig Studio — contrato de escena v1",
+  "description": "Documento de escena versionado de Rig Studio. Listas numéricas planas row-major; 'parents' es la única fuente de jerarquía; 'bones' es derivado.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "name", "mesh", "skeleton", "metadata"],
+  "properties": {
+    "schema_version": { "type": "integer", "minimum": 1 },
+    "name": { "type": "string", "minLength": 1 },
+    "mesh": { "oneOf": [{ "$ref": "#/$defs/mesh" }, { "type": "null" }] },
+    "skeleton": { "oneOf": [{ "$ref": "#/$defs/skeleton" }, { "type": "null" }] },
+    "metadata": { "type": "object" }
+  },
+  "$defs": {
+    "mesh": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["vertices", "faces", "normals", "vertex_count", "face_count"],
+      "properties": {
+        "vertices": {
+          "type": "array",
+          "description": "Lista plana row-major de 3*V floats (x,y,z por vértice).",
+          "items": { "type": "number" },
+          "minItems": 3
+        },
+        "faces": {
+          "type": "array",
+          "description": "Lista plana row-major de 3*F enteros (índices de vértice, triángulos).",
+          "items": { "type": "integer", "minimum": 0 },
+          "minItems": 0
+        },
+        "normals": {
+          "oneOf": [
+            { "type": "array", "items": { "type": "number" } },
+            { "type": "null" }
+          ]
+        },
+        "vertex_count": { "type": "integer", "minimum": 1 },
+        "face_count": { "type": "integer", "minimum": 0 }
+      }
+    },
+    "skeleton": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["joints", "parents", "names", "joint_count", "bone_count"],
+      "properties": {
+        "joints": {
+          "type": "array",
+          "description": "Lista plana row-major de 3*J floats.",
+          "items": { "type": "number" },
+          "minItems": 3
+        },
+        "parents": {
+          "type": "array",
+          "description": "parents[i] = -1 para raíces; en otro caso índice < i. Garantiza árbol sin ciclos.",
+          "items": { "type": "integer", "minimum": -1 },
+          "minItems": 1
+        },
+        "names": {
+          "type": "array",
+          "items": { "type": "string", "minLength": 1 },
+          "minItems": 1
+        },
+        "bones": {
+          "type": "array",
+          "description": "Derivado de parents: pares (hijo, padre). Nunca fuente de verdad.",
+          "items": {
+            "type": "array",
+            "items": { "type": "integer", "minimum": 0 },
+            "minItems": 2,
+            "maxItems": 2
+          }
+        },
+        "joint_count": { "type": "integer", "minimum": 1 },
+        "bone_count": { "type": "integer", "minimum": 0 }
+      }
+    }
+  }
+}

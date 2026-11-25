@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Rig Studio — Visor 3D</title>
+    <link rel="stylesheet" href="./style.css" />
+  </head>
+  <body>
+    <canvas id="viewport"></canvas>
+
+    <div class="hud hud--top">
+      <span class="pill" id="engine">three.js</span>
+      <span class="pill" id="fps">– fps</span>
+      <span class="pill pill--warn" id="mode" hidden></span>
+    </div>
+
+    <div class="hud hud--bottom">
+      Arrastra con el botón izquierdo para orbitar · rueda para zoom
+    </div>
+
+    <div id="error" class="error" hidden></div>
+
+    <!--
+      Script CLÁSICO a propósito: es el build UMD de three.js (r149) vendorizado.
+      Los ES modules no se cargan desde file:// (origen null/CORS), y el visor se
+      abre con QWebEngineView.load(QUrl.fromLocalFile(...)) o directamente en el
+      navegador. Sin CDN => funciona offline.
+    -->
+    <script src="./vendor/three.min.js"></script>
+    <script src="./viewer.js" defer></script>
+  </body>
+</html>

@@ -1,0 +1,24 @@
+# Normaliza los finales de línea en todo el repositorio.
+# `scripts/bootstrap.sh` y el workflow de CI **deben** conservar LF: con CRLF
+# bash falla en Linux ("bad interpreter: /usr/bin/env bash^M").
+* text=auto
+*.sh text eol=lf
+*.ps1 text eol=crlf
+*.json text eol=lf
+*.md text eol=lf
+*.rs text eol=lf
+*.py text eol=lf
+*.yml text eol=lf
+*.js text eol=lf
+*.css text eol=lf
+*.html text eol=lf
+
+# Binarios y activos: sin conversión.
+*.pyd binary
+*.so binary
+*.dylib binary
+*.dll binary
+*.png binary
+*.jpg binary
+*.glb binary
+*.obj binary

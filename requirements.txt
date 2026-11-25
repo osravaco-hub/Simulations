@@ -1,0 +1,16 @@
+# Rig Studio — dependencias de ejecución (runtime puro)
+#
+# Instalación:  python -m venv .venv && .venv\Scripts\activate
+#               pip install -r requirements.txt
+#
+# `torch` (MagicArticulate) NO va aquí: está en `requirements-ml.txt` y es
+# opcional (decisión D-15). Las herramientas de desarrollo están en
+# `requirements-dev.txt`.
+
+# --- UI -------------------------------------------------------------------
+PySide6>=6.7,<7.0
+# QtWebEngine (visor HTML) viene en PySide6-Addons; si usas el wheel base:
+# PySide6-Addons>=6.7,<7.0
+
+# --- Núcleo numérico ------------------------------------------------------
+numpy>=1.26,<3.0
